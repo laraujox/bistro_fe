@@ -1,7 +1,13 @@
 import axios from 'axios';
 
-const api = axios.create({
+const menuApi = axios.create({
   baseURL: 'http://localhost:8000/menu',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+const orderApi = axios.create({
+  baseURL: 'http://localhost:8000/order',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,13 +24,19 @@ const api = axios.create({
 // );
 
 export const getCategories = () => {
-  return api.get('/categories').then(response => {
+  return menuApi.get('/categories').then(response => {
     return response.data
   });
 };
 
 export const getProducts = () => {
-  return api.get('').then(response => {
+  return menuApi.get('').then(response => {
+    return response.data
+  });
+};
+
+export const getOrders = () => {
+  return orderApi.get('/').then(response => {
     return response.data
   });
 };

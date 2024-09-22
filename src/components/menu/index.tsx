@@ -3,7 +3,7 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import Counter from "@/components/menu/counter";
 import Loading from "@/components/menu/loading";
-import {getCategories, getProducts} from "@/components/menu/api";
+import {getCategories, getProducts} from "@/app/api";
 import CategoriesMenu from "@/components/menu/categoriesMenu";
 import FloatingCart from "@/components/menu/FloatingCart";
 
@@ -56,7 +56,7 @@ export default function Menu() {
     }
     try{
       await axios.post(
-        'http://localhost:8000/order',
+        'http://localhost:8000/order/',
         orderData,
         {
           headers: {
