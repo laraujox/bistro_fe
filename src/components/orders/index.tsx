@@ -20,7 +20,7 @@ export default function Orders() {
     }, []);
 
     return (
-        <div className="bg-white w-full h-[900px]">
+        <div className="flex flex-row bg-white w-full min-h-[100px] h-auto overflow-x-scroll">
             {orders.length > 0 ? ( // Check if orders array has content
                 orders.map(order => (
                     <OrderComponent key={order.id} order={order} />

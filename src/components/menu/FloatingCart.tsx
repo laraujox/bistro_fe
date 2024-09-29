@@ -9,6 +9,8 @@ interface FloatingCartProps {
     quantities: { [key: string]: number };
     menuItems: MenuItems;
     onQuantityChange: (id: number, quantity: number) => void;
+    tableId: string;
+    setTableId: (tableId: string) => void;
 }
 
 function getCartHeight(cartItemsAmount: number): number {
@@ -22,10 +24,11 @@ function getCartHeight(cartItemsAmount: number): number {
 const FloatingCart: React.FC<FloatingCartProps> = ({
                                                        quantities,
                                                        menuItems,
-                                                       onQuantityChange
+                                                       onQuantityChange,
+                                                       tableId,
+                                                       setTableId,
                                                    }) => {
     const [isVisible, setIsVisible] = useState(true);
-
     const selectedItems = Object.keys(quantities)
         .filter(id => quantities[id] > 0)
         .map(id => {
@@ -44,7 +47,6 @@ const FloatingCart: React.FC<FloatingCartProps> = ({
         setIsVisible(!isVisible);
     };
 
-    // @ts-ignore
     return (
         <>
             <div
@@ -125,17 +127,32 @@ const FloatingCart: React.FC<FloatingCartProps> = ({
                 }
                 <div
                     className="sticky right-0 bottom-0 bg-white font-bold mt-4 flex flex-row justify-between align-center">
-                <span
-                    className="flex items-center">Total: R${totalPrice.toFixed(2)}</span>
+                    <span className="flex items-center">
+                        Total: R${totalPrice.toFixed(2)}
+                    </span>
 
-                    <button type="submit"
-                            className="mt-4 mb-6 text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2">
+                    {!isCartEmpty && (
+                        <div className="flex items-center align-center">
+                            <span className="mr-1">Mesa:</span>
+                            <input
+                                type="text"
+                                id="table-id"
+                                value={tableId}
+                                onChange={(e) => setTableId(e.target.value)}
+                                required
+                                className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow"
+                                placeholder="Nº da mesa..."/>
+                        </div>
+                    )}
+
+                        < button type="submit"
+                        className="mt-4 mb-6 text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2">
                         Finalizar compra
-                    </button>
-                </div>
-            </div>
-        </>
-    );
-};
+                        </button>
+                        </div>
+                        </div>
+                        </>
+                        );
+                    };
 
 export default FloatingCart;

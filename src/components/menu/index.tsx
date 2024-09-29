@@ -9,6 +9,7 @@ import FloatingCart from "@/components/menu/FloatingCart";
 
 
 export default function Menu() {
+  const [tableId, setTableId] = useState<string>("");
   const [categories, setCategories] = useState<Categories>([]);
   const [menuItems, setMenuItems] = useState<MenuItems>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
@@ -41,23 +42,39 @@ export default function Menu() {
   const handleQuantityChange = (id: number, newQuantity: number) => {
     setQuantities({ ...quantities, [id]: newQuantity });
   };
+
+  const resetQuantities = ()=> {
+      menuItems.forEach((item) => {
+        initialQuantities[item.id] = 0;
+      });
+      setQuantities(initialQuantities);
+      setTableId("");
+  }
+
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
 
-    const orderData = Object.keys(quantities)
+    const selectedProducts = Object.keys(quantities)
         .filter(id => quantities[id]>0)
         .map(id=>({
           id: parseInt(id),
           quantity: quantities[id]
     }))
-    if (orderData.length === 0) {
+    if (selectedProducts.length === 0) {
       alert("Please select at least one product!");
+      return;
+    }
+    if (!tableId) {
+      alert("Please enter the table ID.");
       return;
     }
     try{
       await axios.post(
         'http://localhost:8000/order/',
-        orderData,
+          {
+            "selected_products": selectedProducts,
+            "table_id": tableId
+          },
         {
           headers: {
             'Content-Type': 'application/json',
@@ -66,7 +83,7 @@ export default function Menu() {
         }
       );
       alert("Order placed!")
-      setQuantities(initialQuantities)
+      resetQuantities()
     } catch (error) {
       console.log("Error submitting the form to the API.", error)
     }
@@ -101,11 +118,11 @@ export default function Menu() {
                               <div className="mt-4 flex justify-between">
                                 <div>
                                   <h3 className="text-sm text-gray-700">
-                                    <a href="#">
+                                    <span>
                                       <span aria-hidden="true"
                                             className="absolute inset-0"></span>
                                       {item.name}
-                                    </a>
+                                    </span>
                                   </h3>
                                   <p className="mt-1 text-sm text-gray-500">{item.description}</p>
                                 </div>
@@ -137,6 +154,8 @@ export default function Menu() {
           quantities={quantities}
           menuItems={menuItems}
           onQuantityChange={handleQuantityChange}
+          tableId={tableId}
+          setTableId={setTableId}
       />
 
     </form>
