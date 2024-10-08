@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCookie } from './utils';
 
 const menuApi = axios.create({
   baseURL: 'http://localhost:8000/menu',
@@ -40,3 +41,25 @@ export const getOrders = () => {
     return response.data
   });
 };
+
+export const upgradeOrderStatus = (orderId: number) => {
+  return orderApi.post(`${orderId}/upgrade`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+    },
+      }
+  )
+}
+
+export const downgradeOrderStatus = (orderId: number) => {
+  return orderApi.post(`${orderId}/downgrade`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+    }
+    },
+  )
+}
