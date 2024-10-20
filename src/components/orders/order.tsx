@@ -1,8 +1,10 @@
 "use client";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import {upgradeOrderStatus, downgradeOrderStatus} from "@/app/api";
-import {useEffect, useState} from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; // Make sure this is imported!
+import {CallbackWebSocketMessage, WebSocketMessage} from "@/app/interfaces";
+import useWebSocket from "@/app/useWebsocket";
+import {ORDERS_WEBSOCKET_URL} from "@/app/constants";
+import {useCallback, useState} from "react";
 
 const statusColors: { [key: string]: string } = {
   PENDING: "bg-red-300",
@@ -12,99 +14,93 @@ const statusColors: { [key: string]: string } = {
   FINISHED: "bg-green-300",
 };
 
-const getBgColor = (status: string) => statusColors[status];
+const getBgColor = (status: string) => statusColors[status] || "bg-gray-300"; // Fallback for unknown status
 
-export default function OrderComponent({ order }: { order: Order }) {
-    const [socket, setSocket] = useState<WebSocket | null>(null);
-    const [messages, setMessages] = useState<string[]>([]);
+interface OrderComponentProps {
+  order: Order;
+}
 
-    useEffect(() => {
-        const socket = new WebSocket('ws://localhost:8000/ws/orders/');
+export default function OrderComponent({ order }: OrderComponentProps) {
+  const [currentOrder, setCurrentOrder] = useState<Order>(order);
 
-        socket.onopen = () => {
-            console.log("WebSocket is open now.");
-        };
+  const onMessageCallback = useCallback((data: CallbackWebSocketMessage) => {
+    console.log("WebSocket Message Received: ", data);
+    setCurrentOrder((prevOrder) => ({
+      ...prevOrder,
+      status: data.order_status,
+    }));
+    console.log(`Order ${currentOrder.id} updated to status: ${data.order_status}`)
+  }, [currentOrder.id]); // Empty dependency array means this callback will be memoized and not change on re-renders
 
-        socket.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            setMessages((prevMessages) => [...prevMessages, data.message]);
-        };
+  const { sendMessage } = useWebSocket(
+    ORDERS_WEBSOCKET_URL, onMessageCallback
+  );
+  const openEditOrderModal = (order: Order) => {
+    // TODO: Implement this method's logic
+    console.log("Open Edit Order Modal", order);
+  };
 
-        socket.onclose = (e) => {
-            console.log("WebSocket is closed now.");
-        };
+  const cancelOrder = (orderId: number) => {
+    // TODO: Implement this method's logic
+    console.log("Cancel Order", orderId);
+  };
 
-        setSocket(socket);
+  const handleUpgradeOrderStatus = (orderId: number) => {
+    sendMessage({ upgrade: true, order_id: orderId });
+  };
 
-        return () => {
-            socket.close();
-        };
-    }, []);
+  const handleDowngradeOrderStatus = (orderId: number) => {
+    sendMessage({ upgrade: false, order_id: orderId });
+  };
 
-    const sendMessage = () => {
-        if (socket) {
-            socket.send(JSON.stringify({ 'message': "Testing websocket." }));
-        }
-    };
+  const bgColor = getBgColor(currentOrder.status);
 
-      const openEditOrderModal = (order: Order) => {
-          // TODO: Create method content
-          sendMessage()
-      };
-      const cancelOrder = (orderId: number) => {
-          // TODO: Create method content
-          sendMessage()
-      };
-
-
-    const bgColor = getBgColor(order.status);
-
-    return (
-        <div className={`min-w-[325px] h-auto p-5 m-3  ${bgColor}`}>
-            <div className="w-full flex justify-between">
-                <span className="font-bold text-3xl">#{order.id}</span>
-                <div>
-                    <button className="mx-1" onClick={()=>openEditOrderModal(order)} >
-                        <img
-                            src="https://cdn-icons-png.flaticon.com/512/84/84380.png"
-                            alt=""
-                            className="w-[30px]"
-                        />
-                    </button>
-                    <button className="mx-1" onClick={()=>cancelOrder(order.id)} >
-                        <img
-                            src="https://cdn-icons-png.flaticon.com/512/3334/3334328.png"
-                            alt=""
-                            className="w-[30px]"
-                        />
-                    </button>
-                </div>
-            </div>
-            <div className="w-full flex justify-between items-center ">
-                <button onClick={()=>downgradeOrderStatus(order.id)} className="icon-hover">
-                    <FontAwesomeIcon size="2x" icon={faArrowLeft}/>
-                </button>
-
-                <span className="text-2xl">{order.status}</span>
-                <button onClick={()=>upgradeOrderStatus(order.id)} className="icon-hover">
-                    <FontAwesomeIcon size="2x" icon={faArrowRight}/>
-                </button>
-
-            </div>
-            <div className="w-full flex justify-center items-center">
-                <span className="text-xl">
-                    Mesa: {order.table_id}
-                </span>
-            </div>
-
-            {order.items.map((item, index) => (
-                <div className="my-4" key={index}>
-                    <h2 className="font-bold text-xl">{item.product__category__name}</h2>
-                    <ul className="list-disc ml-6">
-                        <li>{item.quantity}x {item.product__name}</li>
-                    </ul>
-                </div>
-            ))}
+  return (
+    <div className={`min-w-[325px] h-auto p-5 m-3 ${bgColor} transition-colors duration-500 ease-in-out `}>
+      <div className="w-full flex justify-between">
+        <span className="font-bold text-3xl">#{currentOrder.id}</span>
+        <div>
+          <button className="blur-sm mx-1" onClick={() => openEditOrderModal(order)}>
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/84/84380.png"
+              alt="Edit"
+              className="w-[30px]"
+            />
+          </button>
+          <button className="blur-sm mx-1" onClick={() => cancelOrder(currentOrder.id)}>
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/3334/3334328.png"
+              alt="Cancel"
+              className="w-[30px]"
+            />
+          </button>
         </div>
-    );
+      </div>
+
+      <div className="w-full flex justify-between items-center ">
+        <button onClick={() => handleDowngradeOrderStatus(currentOrder.id)} className="icon-hover">
+          <FontAwesomeIcon size="2x" icon={faArrowLeft}/>
+        </button>
+
+        <span className="text-2xl">{currentOrder.status}</span>
+
+        <button onClick={() => handleUpgradeOrderStatus(currentOrder.id)} className="icon-hover">
+          <FontAwesomeIcon size="2x" icon={faArrowRight}/>
+        </button>
+      </div>
+
+      <div className="w-full flex justify-center items-center">
+        <span className="text-xl">Mesa: {currentOrder.table_id}</span>
+      </div>
+
+      {currentOrder.items.map((item, index) => (
+        <div className="my-4" key={index}>
+          <h2 className="font-bold text-xl">{item.product__category__name}</h2>
+          <ul className="list-disc ml-6">
+            <li>{item.quantity}x {item.product__name}</li>
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
 }

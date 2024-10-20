@@ -1,5 +1,7 @@
 import axios from 'axios';
-import { getCookie } from './utils';
+import useWebSocket from "@/app/useWebsocket";
+import {ORDERS_WEBSOCKET_URL} from "@/app/constants";
+import {WebSocketMessage} from "@/app/interfaces";
 
 const menuApi = axios.create({
   baseURL: 'http://localhost:8000/menu',
